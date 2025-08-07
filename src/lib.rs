@@ -1197,6 +1197,27 @@ mod tests {
     }
 
     #[test]
+    fn it_recognizes_search_match_operator() {
+        let input = "SELECT a, b, c, s FROM data WHERE   s @@   query($1);";
+
+        let options = FormatOptions::default();
+        let expected = indoc!(
+            "
+            SELECT
+              a,
+              b,
+              c,
+              s
+            FROM
+              data
+            WHERE
+              s @@ query($1);"
+        );
+
+        assert_eq!(format(input, &QueryParams::None, &options), expected)
+    }
+
+    #[test]
     fn it_recognizes_colon_variables() {
         let input =
             "SELECT :variable, :a1_2.3$, :'var name', :\"var name\", :`var name`, :[var name];";
