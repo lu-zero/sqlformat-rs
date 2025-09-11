@@ -233,7 +233,15 @@ impl<'a> Formatter<'a> {
             self.add_new_line(query);
         }
         query.push_str(&self.equalize_whitespace(&self.format_reserved_word(token.value)));
-        if newline_after && token.alias != "CREATE" {
+
+        if newline_after
+            && token.alias != "CREATE"
+            && (self.options.max_inline_top_level.is_none()
+                || self
+                    .next_non_whitespace_token(1)
+                    .is_some_and(|t| t.kind != TokenKind::OpenParen)
+                || span_info.arguments != 0)
+        {
             self.indentation.increase_top_level(span_info);
             self.add_new_line(query);
         } else {
@@ -548,6 +556,17 @@ impl<'a> Formatter<'a> {
         let index = self.index.checked_add(idx);
         if let Some(index) = index {
             self.tokens.get(index)
+        } else {
+            None
+        }
+    }
+
+    fn next_non_whitespace_token(&self, idx: usize) -> Option<&Token<'_>> {
+        let index = self.index.checked_add(idx);
+        if let Some(index) = index {
+            self.tokens[index..]
+                .iter()
+                .find(|t| t.kind != TokenKind::Whitespace)
         } else {
             None
         }

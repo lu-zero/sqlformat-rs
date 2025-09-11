@@ -688,12 +688,11 @@ mod tests {
             "
             INSERT INTO t(id, a, min, max)
             SELECT input.id, input.a, input.min, input.max
-            FROM
-              (
-                SELECT id, a, min, max
-                FROM foo
-                WHERE a IN ('a', 'b')
-              ) AS input
+            FROM (
+              SELECT id, a, min, max
+              FROM foo
+              WHERE a IN ('a', 'b')
+            ) AS input
             WHERE (SELECT true FROM condition)
             ON CONFLICT ON CONSTRAINT a_id_key DO UPDATE SET
               id = EXCLUDED.id,
@@ -2283,8 +2282,7 @@ mod tests {
             cc AS (
               INSERT INTO
                 C (a, b, c, d)
-              VALUES
-                (1, 2, 3, 4)
+              VALUES (1, 2, 3, 4)
             )
             SELECT b, field
             FROM a, aa;"
