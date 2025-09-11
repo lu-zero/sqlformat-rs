@@ -101,6 +101,9 @@ pub enum QueryParams {
 pub(crate) struct SpanInfo {
     pub full_span: usize,
     pub arguments: usize,
+    pub blocks: usize,
+    pub max_inner_span: usize,
+    pub max_nesting: usize,
 }
 
 #[cfg(test)]

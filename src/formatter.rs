@@ -240,7 +240,8 @@ impl<'a> Formatter<'a> {
                 || self
                     .next_non_whitespace_token(1)
                     .is_some_and(|t| t.kind != TokenKind::OpenParen)
-                || span_info.arguments != 0)
+                || span_info.blocks != 1
+                || self.options.max_inline_block < span_info.max_inner_span)
         {
             self.indentation.increase_top_level(span_info);
             self.add_new_line(query);
@@ -576,13 +577,25 @@ impl<'a> Formatter<'a> {
         let mut block_level = self.block_level;
         let mut full_span = 0;
         let mut arguments = 0;
+        let mut blocks = 0;
+        let mut max_nesting = 0;
+        let mut max_inner_span = 0;
+        let mut inner_span = 0;
 
         for token in self.tokens[self.index..].iter().skip(1) {
             match token.kind {
                 TokenKind::OpenParen => {
+                    if block_level == self.block_level {
+                        blocks += 1
+                    }
                     block_level += 1;
                 }
                 TokenKind::CloseParen => {
+                    max_nesting = max_nesting.max(block_level);
+                    max_inner_span = max_inner_span.max(inner_span);
+                    if block_level == self.block_level.saturating_add(1) {
+                        inner_span = 0;
+                    }
                     block_level = block_level.saturating_sub(1);
                     if block_level < self.block_level {
                         break;
@@ -601,6 +614,7 @@ impl<'a> Formatter<'a> {
                 }
                 TokenKind::Operator if token.value == "," && block_level == self.block_level => {
                     arguments += 1;
+                    blocks += 1;
                 }
                 _ => {}
             }
@@ -611,6 +625,9 @@ impl<'a> Formatter<'a> {
         SpanInfo {
             full_span,
             arguments,
+            blocks,
+            max_nesting,
+            max_inner_span,
         }
     }
 
