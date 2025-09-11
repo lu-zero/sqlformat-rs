@@ -100,7 +100,7 @@ pub enum QueryParams {
 #[derive(Default, Debug)]
 pub(crate) struct SpanInfo {
     pub full_span: usize,
-    // potentially comma span info here
+    pub arguments: usize,
 }
 
 #[cfg(test)]

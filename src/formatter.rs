@@ -556,6 +556,7 @@ impl<'a> Formatter<'a> {
     fn top_level_tokens_info(&self) -> SpanInfo {
         let mut block_level = self.block_level;
         let mut full_span = 0;
+        let mut arguments = 0;
 
         for token in self.tokens[self.index..].iter().skip(1) {
             match token.kind {
@@ -579,14 +580,19 @@ impl<'a> Formatter<'a> {
                     full_span += 1;
                     continue;
                 }
-
+                TokenKind::Operator if token.value == "," && block_level == self.block_level => {
+                    arguments += 1;
+                }
                 _ => {}
             }
 
             full_span += token.value.len();
         }
 
-        SpanInfo { full_span }
+        SpanInfo {
+            full_span,
+            arguments,
+        }
     }
 
     fn format_no_change(&self, token: &Token<'_>, query: &mut String) {
