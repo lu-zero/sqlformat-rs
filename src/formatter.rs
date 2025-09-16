@@ -319,7 +319,7 @@ impl<'a> Formatter<'a> {
             TokenKind::LineComment,
         ];
 
-        let inlined = self.inline_block.begin_if_possible(self.tokens, self.index);
+        let (inlined, block_len) = self.inline_block.begin_if_possible(self.tokens, self.index);
         let fold_in_top_level = !inlined
             && self.options.max_inline_top_level.is_some()
             && self
@@ -367,7 +367,8 @@ impl<'a> Formatter<'a> {
             query.push(' ');
         }
 
-        self.indentation.increase_block_level(fold_in_top_level);
+        self.indentation
+            .increase_block_level(block_len, fold_in_top_level);
 
         query.push_str(&value);
 

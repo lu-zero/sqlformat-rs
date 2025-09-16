@@ -9,7 +9,7 @@ struct PreviousTokens<'a> {
 pub(crate) struct Indentation<'a> {
     options: &'a FormatOptions<'a>,
     indent_types: Vec<IndentType>,
-    top_level_span: Vec<SpanInfo>,
+    span: Vec<usize>,
     previous: Vec<PreviousTokens<'a>>,
 }
 
@@ -25,7 +25,7 @@ impl<'a> Indentation<'a> {
         Indentation {
             options,
             indent_types: Vec::new(),
-            top_level_span: Vec::new(),
+            span: Vec::new(),
             previous: Vec::new(),
         }
     }
@@ -47,22 +47,23 @@ impl<'a> Indentation<'a> {
 
     pub fn increase_top_level(&mut self, span: SpanInfo) {
         self.indent_types.push(IndentType::Top);
-        self.top_level_span.push(span);
+        self.span.push(span.full_span);
     }
 
-    pub fn increase_block_level(&mut self, folded: bool) {
+    pub fn increase_block_level(&mut self, len: usize, folded: bool) {
         self.indent_types.push(if folded {
             IndentType::FoldedBlock
         } else {
             IndentType::Block
         });
         self.previous.push(Default::default());
+        self.span.push(len);
     }
 
     pub fn decrease_top_level(&mut self) {
         if self.indent_types.last() == Some(&IndentType::Top) {
             self.indent_types.pop();
-            self.top_level_span.pop();
+            self.span.pop();
             self.previous.pop();
         }
     }
@@ -73,6 +74,7 @@ impl<'a> Indentation<'a> {
         while !self.indent_types.is_empty() {
             let kind = self.indent_types.pop();
             self.previous.pop();
+            self.span.pop();
             folded = kind == Some(IndentType::FoldedBlock);
             if kind != Some(IndentType::Top) {
                 break;
@@ -83,7 +85,7 @@ impl<'a> Indentation<'a> {
 
     pub fn reset_indentation(&mut self) {
         self.indent_types.clear();
-        self.top_level_span.clear();
+        self.span.clear();
         self.previous.clear();
     }
 
@@ -133,8 +135,8 @@ impl<'a> Indentation<'a> {
         }
     }
 
-    /// The full span between two top level tokens
+    /// The full span of the indentation
     pub fn span(&self) -> usize {
-        self.top_level_span.last().map_or(0, |span| span.full_span)
+        self.span.last().map_or(0, |s| *s)
     }
 }
