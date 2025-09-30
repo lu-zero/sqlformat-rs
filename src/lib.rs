@@ -24,6 +24,17 @@ pub fn format(query: &str, params: &QueryParams, options: &FormatOptions) -> Str
     formatter::format(&tokens, params, options)
 }
 
+/// The SQL dialect to use
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Dialect {
+    /// Best effort, most dialect-specific constructs are disabled
+    Generic,
+    /// It considers array notations
+    PostgreSql,
+    /// It uses the `[brakets to quote]` notation
+    SQLServer,
+}
+
 /// Options for controlling how the library formats SQL
 #[derive(Debug, Clone)]
 pub struct FormatOptions<'a> {
@@ -65,6 +76,10 @@ pub struct FormatOptions<'a> {
     ///
     /// Default: false,
     pub joins_as_top_level: bool,
+    /// Tell the SQL dialect to use
+    ///
+    /// Default: Generic
+    pub dialect: Dialect,
 }
 
 impl<'a> Default for FormatOptions<'a> {
@@ -79,6 +94,7 @@ impl<'a> Default for FormatOptions<'a> {
             max_inline_arguments: None,
             max_inline_top_level: None,
             joins_as_top_level: false,
+            dialect: Dialect::Generic,
         }
     }
 }
@@ -1325,7 +1341,10 @@ mod tests {
     #[test]
     fn it_recognizes_bracketed_strings() {
         let inputs = ["[foo JOIN bar]", "[foo ]] JOIN bar]"];
-        let options = FormatOptions::default();
+        let options = FormatOptions {
+            dialect: Dialect::SQLServer,
+            ..Default::default()
+        };
         for input in &inputs {
             assert_eq!(&format(input, &QueryParams::None, &options), input);
         }
@@ -1335,7 +1354,10 @@ mod tests {
     fn it_recognizes_at_variables() {
         let input =
             "SELECT @variable, @a1_2.3$, @'var name', @\"var name\", @`var name`, @[var name];";
-        let options = FormatOptions::default();
+        let options = FormatOptions {
+            dialect: Dialect::SQLServer,
+            ..Default::default()
+        };
         let expected = indoc!(
             "
             SELECT
@@ -1360,7 +1382,10 @@ mod tests {
             ("var name".to_string(), "'var value'".to_string()),
             ("var\\name".to_string(), "'var\\ value'".to_string()),
         ];
-        let options = FormatOptions::default();
+        let options = FormatOptions {
+            dialect: Dialect::SQLServer,
+            ..Default::default()
+        };
         let expected = indoc!(
             "
             SELECT
@@ -1383,7 +1408,10 @@ mod tests {
     fn it_recognizes_colon_variables() {
         let input =
             "SELECT :variable, :a1_2.3$, :'var name', :\"var name\", :`var name`, :[var name];";
-        let options = FormatOptions::default();
+        let options = FormatOptions {
+            dialect: Dialect::SQLServer,
+            ..Default::default()
+        };
         let expected = indoc!(
             "
             SELECT
@@ -1416,7 +1444,10 @@ mod tests {
                 "'super weird value'".to_string(),
             ),
         ];
-        let options = FormatOptions::default();
+        let options = FormatOptions {
+            dialect: Dialect::SQLServer,
+            ..Default::default()
+        };
         let expected = indoc!(
             "
             SELECT
