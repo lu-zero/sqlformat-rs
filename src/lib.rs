@@ -2356,8 +2356,7 @@ mod tests {
               FROM table
             )
             SELECT
-              b,
-              field
+              b, field
             FROM a, aa;"
         };
         assert_eq!(format(input, &QueryParams::None, &options), expected);
