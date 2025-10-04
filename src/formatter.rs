@@ -139,6 +139,23 @@ pub(crate) fn format(
                 }
             },
         }
+
+        #[cfg(feature = "debug")]
+        {
+            use crate::debug::*;
+            let b = anstyle::Style::new().bold();
+            let k = b.fg_color(Some(token.kind.to_color().into()));
+            let r = k.render_reset();
+            let k = k.render();
+            let kind = format!("{:?}", token.kind);
+
+            let mut lines = formatted_query
+                .lines()
+                .rev()
+                .filter(|l| !l.trim().is_empty());
+            let line = lines.next().unwrap_or(formatted_query.as_str());
+            anstream::eprintln!("{k}{:21}{r}: {:50} {line}", kind, token.value);
+        }
     }
     formatted_query.trim().to_string()
 }
