@@ -159,6 +159,7 @@ fn get_type_specifier_token<'i>(
             TokenKind::Placeholder,
             TokenKind::Reserved,
             TokenKind::String,
+            TokenKind::Number,
             TokenKind::TypeSpecifier,
             TokenKind::Word,
         ]
